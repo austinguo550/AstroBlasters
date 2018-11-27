@@ -561,7 +561,7 @@ class Scene_Component       // The Scene_Component superclass is the base class 
 
 window.Canvas_Widget = window.tiny_graphics.Canvas_Widget =
 class Canvas_Widget                    // Canvas_Widget embeds a WebGL demo onto a website, along with various panels of controls.
-{ constructor( element, scenes, show_controls = true )   // One panel exists per each scene that's used in the canvas.  You can use up
+{ constructor( element, scenes, show_controls = false )   // One panel exists per each scene that's used in the canvas.  You can use up
     { this.create( element, scenes, show_controls )      // to 16 Canvas_Widgets; browsers support up to 16 WebGL contexts per page.    
 
       const rules = [ ".canvas-widget { width: 1080px; background: DimGray }",
