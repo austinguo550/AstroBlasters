@@ -24,32 +24,68 @@ class Project extends Scene_Component
 
         this.lights = [ new Light( Vec.of( -5,5,5,1 ), Color.of( 0,1,1,1 ), 100000 ) ];
 
+        this.game_over = false;
+        this.last_spawn_time = -10.0;
+
         this.earth_radius = 1;
         this.planet_radius = 0.2;
         this.bullet_radius = 0.08;
 
 //         this.bullet_transforms = [Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))];
         this.bullet_transforms = [];
-        this.planet_transforms = [Mat4.identity().times(Mat4.rotation(2, Vec.of(0,0,1)))
-                                                 .times(Mat4.translation([0,3,0]))
-                                                 .times(Mat4.scale([this.planet_radius, this.planet_radius, this.planet_radius]))]
+        this.planet_transforms = [];
         this.earth_transform = Mat4.identity().times(Mat4.scale([this.earth_radius, this.earth_radius, this.earth_radius]))
       }
+
+    // rot controls how fast planet orbits around Earth
+    // lin controls how fast planet descends towards Earth
+    // init_height is initial height of planet above Earth
+    // init_rot is initial rotation angle of planet about origin
+    // scale is radius of planet
+    // init_time is time of planet spawn
+    add_planet(rot, lin, init_height, init_rot, scale, init_t) {
+        let planet = {
+            rot: rot,
+            lin: lin,
+            scale: scale,
+            init_time: init_t,
+            init_rot: init_rot,
+            init_height: init_height,
+            transform: Mat4.identity().times(Mat4.rotation(init_rot, Vec.of(0,0,1)))
+                                      .times(Mat4.translation([0, init_height, 0]))
+                                      .times(Mat4.scale([scale, scale, scale]))
+        };
+
+        this.planet_transforms.push(planet);
+    }
+
+    spawn_planets(t) {
+        if (t - this.last_spawn_time > 5.0) {
+            console.log("SPAWN");
+            this.last_spawn_time = t;
+            let num_spawn = Math.round(1.08**t);
+            for (let i = 0; i < num_spawn; i++) {
+                this.add_planet(Math.random(), Math.random(), 10, Math.random()*Math.PI, 0.2, t);
+            }
+        }
+    }
 
     display( graphics_state )
       { graphics_state.lights = this.lights;        // Use the lights stored in this.lights.
         const t = graphics_state.animation_time / 1000, dt = graphics_state.animation_delta_time / 1000;
 
-        /*
-        console.log("BULLETS => ");
-        console.log(this.bullet_transforms);
+        
+        //console.log("BULLETS => ");
+        //console.log(this.bullet_transforms);
 
         console.log("PLANETS => ");
         console.log(this.planet_transforms);
-        */
+        
+        // Spawn planets
+        this.spawn_planets(t);
 
         // Draw Earth
-        this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,0,1)));
+        this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(1,1,1)));
         this.shapes.sphere.draw(graphics_state, this.earth_transform, this.materials.earth);
 
         // Detect collisions and draw planets, bullets
@@ -59,14 +95,27 @@ class Project extends Scene_Component
         for (let p = 0; p < this.planet_transforms.length; p++) {
             let planet = this.planet_transforms[p];
 
+            // Check for collision to Earth
+            let planet_coords = Vec.of(planet.transform[0][3], planet.transform[1][3], planet.transform[2][3]);
+            let earth_dist = Math.sqrt((planet_coords[0])**2 + (planet_coords[1])**2 + (planet_coords[2])**2);
+            let earth_radius_sum = planet.scale + this.earth_radius;
+
+            if (earth_dist < earth_radius_sum) {
+                // Collision to earth has occured
+                console.log("GAME OVER");
+                this.game_over = true;
+                delete this.planet_transforms[p];
+                continue;
+            }
+
+            // Check for collision to bullets
             let collision = false;
             for (let b = 0; b < this.bullet_transforms.length; b++) {
                 let bullet = this.bullet_transforms[b];
 
                 let bullet_coords = Vec.of(bullet[0][3], bullet[1][3], bullet[2][3]);
-                let planet_coords = Vec.of(planet[0][3], planet[1][3], planet[2][3]);
                 let dist = Math.sqrt((bullet_coords[0]-planet_coords[0])**2 + (bullet_coords[1]-planet_coords[1])**2 + (bullet_coords[2]-planet_coords[2])**2);
-                let radius_sum = this.planet_radius + this.bullet_radius;
+                let radius_sum = planet.scale + this.bullet_radius;
 
                 if (dist < radius_sum) {
                     // Collision occured
@@ -81,13 +130,13 @@ class Project extends Scene_Component
                 }
             } 
             if (!collision) {
-                this.shapes.sphere.draw(graphics_state, planet, this.materials.phong);
+                this.shapes.sphere.draw(graphics_state, planet.transform, this.materials.phong);
                 // Update planet
                 let next_ptransform = Mat4.identity();
-                next_ptransform = next_ptransform.times(Mat4.rotation(t, Vec.of(0,0,1)))
-                                                 .times(Mat4.translation([0, 3-0.5*t, 0]))
-                                                 .times(Mat4.scale([this.planet_radius, this.planet_radius, this.planet_radius]));
-                this.planet_transforms[p] = next_ptransform;
+                next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
+                                                 .times(Mat4.translation([0, planet.init_height-planet.lin*(t-planet.init_time), 0]))
+                                                 .times(Mat4.scale([planet.scale, planet.scale, planet.scale]));
+                this.planet_transforms[p].transform = next_ptransform;
             } else {
                 // Collision occured
                 delete this.planet_transforms[p];
