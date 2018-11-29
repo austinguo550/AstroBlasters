@@ -1,0 +1,22 @@
+.canvas-widget {
+  position: relative;
+}
+
+.overlay {
+  position: absolute;
+  background: none !important;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  color: white;
+  font-size: 40px;
+  top:20px;
+}
+
+.hidden {
+  display: none;
+}
+
+#game-over {
+  top: 65px;
+}

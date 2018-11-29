@@ -19,13 +19,14 @@ class Project extends Scene_Component
 
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
-            earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)})
+            earth: context.get_instance(Texture_Sphere).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)})
           }
 
         this.lights = [ new Light( Vec.of( -5,5,5,1 ), Color.of( 0,1,1,1 ), 100000 ) ];
 
         this.game_over = false;
         this.last_spawn_time = -10.0;
+        this.score_label = document.getElementById("score");
 
         this.earth_radius = 1;
         this.planet_radius = 0.2;
@@ -43,11 +44,13 @@ class Project extends Scene_Component
     // init_rot is initial rotation angle of planet about origin
     // scale is radius of planet
     // init_time is time of planet spawn
-    add_planet(rot, lin, init_height, init_rot, scale, init_t) {
+    // dir is direction of orbit (0 for clockwise, 1 for counter-clockwise)
+    add_planet(rot, lin, init_height, init_rot, scale, init_t, dir) {
         let planet = {
             rot: rot,
             lin: lin,
             scale: scale,
+            dir: dir,
             init_time: init_t,
             init_rot: init_rot,
             init_height: init_height,
@@ -63,9 +66,9 @@ class Project extends Scene_Component
         if (t - this.last_spawn_time > 5.0) {
             console.log("SPAWN");
             this.last_spawn_time = t;
-            let num_spawn = Math.round(1.08**t);
+            let num_spawn = Math.round((t/8)**2)+4;
             for (let i = 0; i < num_spawn; i++) {
-                this.add_planet(Math.random(), Math.random(), 10, Math.random()*Math.PI, 0.2, t);
+                this.add_planet(Math.random(), Math.random(), 10, Math.random()*Math.PI*2, 0.2, t, Math.random() < 0.5 ? -1 : 1);
             }
         }
     }
@@ -73,7 +76,6 @@ class Project extends Scene_Component
     display( graphics_state )
       { graphics_state.lights = this.lights;        // Use the lights stored in this.lights.
         const t = graphics_state.animation_time / 1000, dt = graphics_state.animation_delta_time / 1000;
-
         
         //console.log("BULLETS => ");
         //console.log(this.bullet_transforms);
@@ -82,7 +84,10 @@ class Project extends Scene_Component
         console.log(this.planet_transforms);
         
         // Spawn planets
-        this.spawn_planets(t);
+        if (!this.game_over) {
+            this.score_label.innerHTML = t.toFixed(2);
+            this.spawn_planets(t);
+        }
 
         // Draw Earth
         this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(1,1,1)));
@@ -105,6 +110,16 @@ class Project extends Scene_Component
                 console.log("GAME OVER");
                 this.game_over = true;
                 delete this.planet_transforms[p];
+
+                // Add overlay text
+                let overlay = document.getElementById('game-over');
+                let className = 'hidden';
+                if (overlay.classList)
+                  overlay.classList.remove(className);
+                else
+                  overlay.className = overlay.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+
+
                 continue;
             }
 
@@ -133,7 +148,7 @@ class Project extends Scene_Component
                 this.shapes.sphere.draw(graphics_state, planet.transform, this.materials.phong);
                 // Update planet
                 let next_ptransform = Mat4.identity();
-                next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
+                next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.dir*planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
                                                  .times(Mat4.translation([0, planet.init_height-planet.lin*(t-planet.init_time), 0]))
                                                  .times(Mat4.scale([planet.scale, planet.scale, planet.scale]));
                 this.planet_transforms[p].transform = next_ptransform;
@@ -148,6 +163,10 @@ class Project extends Scene_Component
         this.bullet_transforms = this.bullet_transforms.filter((v) => typeof v !== 'undefined');
       }
   }
+
+class Texture_Sphere extends Phong_Shader {
+    
+}
 
 class Texture_Scroll_X extends Phong_Shader
 { fragment_glsl_code()           // ********* FRAGMENT SHADER ********* 

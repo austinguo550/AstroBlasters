@@ -4,13 +4,25 @@
          window.classes = {}                    
          </script>          
                                       <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading: //-->
+<script>
+  let GAME_OVER = false;
+</script>                                      
 <script src="tiny-graphics.js" ></script>
 <script src= "dependencies.js" ></script>
-<script src=   "main-scene.js" ></script></head>
+<script src=   "main-scene.js" ></script>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+
 <body style="background: DarkGray">       <!-- Begin typing your web page here. //-->
 
                               <!-- The following code embeds a WebGL canvas panel widget with certain scenes and their controls. //-->
-<div id="main-canvas" class="canvas-widget"></div>
+<div id="main-canvas" class="canvas-widget">
+  <div id="game-over" class="overlay hidden">GAME OVER</div>
+  <div class="overlay"> 
+    <label id="score">00</label>
+  </div>
+</div>
 <script> "use strict"     // ********************* THE ENTRY POINT OF YOUR WHOLE PROGRAM STARTS HERE ********************* 
                                            // Use this code to embed a widget into any web page.  The widget inclues a 3D WebGL area
                                            // (an HTML canvas) and various panels of controls.
