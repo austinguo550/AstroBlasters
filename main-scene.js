@@ -73,6 +73,14 @@ class Project extends Scene_Component
         }
     }
 
+    remove_class(elem_id, className) {
+        let elem = document.getElementById(elem_id);
+        if (elem.classList)
+          elem.classList.remove(className);
+        else
+          elem.className = elem.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');   
+    }
+
     display( graphics_state )
       { graphics_state.lights = this.lights;        // Use the lights stored in this.lights.
         const t = graphics_state.animation_time / 1000, dt = graphics_state.animation_delta_time / 1000;
@@ -80,8 +88,8 @@ class Project extends Scene_Component
         //console.log("BULLETS => ");
         //console.log(this.bullet_transforms);
 
-        console.log("PLANETS => ");
-        console.log(this.planet_transforms);
+        //console.log("PLANETS => ");
+        //console.log(this.planet_transforms);
         
         // Spawn planets
         if (!this.game_over) {
@@ -90,7 +98,7 @@ class Project extends Scene_Component
         }
 
         // Draw Earth
-        this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(1,1,1)));
+        this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,1,0)));
         this.shapes.sphere.draw(graphics_state, this.earth_transform, this.materials.earth);
 
         // Detect collisions and draw planets, bullets
@@ -111,15 +119,9 @@ class Project extends Scene_Component
                 this.game_over = true;
                 delete this.planet_transforms[p];
 
-                // Add overlay text
-                let overlay = document.getElementById('game-over');
-                let className = 'hidden';
-                if (overlay.classList)
-                  overlay.classList.remove(className);
-                else
-                  overlay.className = overlay.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
-
-
+                // Show overlay game over text
+                this.remove_class('game-over', 'hidden');
+                
                 continue;
             }
 

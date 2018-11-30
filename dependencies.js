@@ -140,12 +140,22 @@ class Subdivision_Sphere extends Shape  // This Shape defines a Sphere surface, 
       this.subdivideTriangle( 0, 2, 3, max_subdivisions); 
       
       for( let p of this.positions )
-        { this.normals.push( p.copy() );                 // Each point has a normal vector that simply goes to the point from the origin.
+        { 
+          console.log(p);
+          this.normals.push( p.copy() );                 // Each point has a normal vector that simply goes to the point from the origin.
 
                                                          // Textures are tricky.  A Subdivision sphere has no straight seams to which image 
                                                          // edges in UV space can be mapped.  The only way to avoid artifacts is to smoothly                                                          
-          this.texture_coords.push(                      // wrap & unwrap the image in reverse - displaying the texture twice on the sphere.
-                                 Vec.of( Math.asin( p[0]/Math.PI ) + .5, Math.asin( p[1]/Math.PI ) + .5 ) ) }
+                                                         // wrap & unwrap the image in reverse - displaying the texture twice on the sphere.
+          
+
+          let np = Vec.of(p[0], p[1], p[2]);
+          np.normalize();
+          let u = Math.atan2(np[0], np[2]) / (2.*Math.PI) + 0.5;
+          let v = np[1] * 0.5 + 0.5;
+
+          this.texture_coords.push(                      
+                                 Vec.of( u, v ) ) }
     }
   subdivideTriangle( a, b, c, count )   // Recurse through each level of detail by splitting triangle (a,b,c) into four smaller ones.
     { 
@@ -609,10 +619,10 @@ class Movement_Controls extends Scene_Component    // Movement_Controls is a Sce
       const mouse_position = ( e, rect = canvas.getBoundingClientRect() ) => 
                                    Vec.of( e.clientX - (rect.left + rect.right)/2, e.clientY - (rect.bottom + rect.top)/2 );
                                         // Set up mouse response.  The last one stops us from reacting if the mouse leaves the canvas.
-      document.addEventListener( "mouseup",   e => { this.mouse.anchor = undefined; } );
-      canvas  .addEventListener( "mousedown", e => { e.preventDefault(); this.mouse.anchor      = mouse_position(e); } );
-      canvas  .addEventListener( "mousemove", e => { e.preventDefault(); this.mouse.from_center = mouse_position(e); } );
-      canvas  .addEventListener( "mouseout",  e => { if( !this.mouse.anchor ) this.mouse.from_center.scale(0) } );  
+//       document.addEventListener( "mouseup",   e => { this.mouse.anchor = undefined; } );
+//       canvas  .addEventListener( "mousedown", e => { e.preventDefault(); this.mouse.anchor      = mouse_position(e); } );
+//       canvas  .addEventListener( "mousemove", e => { e.preventDefault(); this.mouse.from_center = mouse_position(e); } );
+//       canvas  .addEventListener( "mouseout",  e => { if( !this.mouse.anchor ) this.mouse.from_center.scale(0) } );  
     }
   show_explanation( document_element ) { }
   make_control_panel()                                                        // This function of a scene sets up its keyboard shortcuts.

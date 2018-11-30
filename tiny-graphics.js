@@ -525,25 +525,26 @@ class Scene_Component       // The Scene_Component superclass is the base class 
     }
   key_triggered_button( description, shortcut_combination, callback, color = '#'+Math.random().toString(9).slice(-6), 
                         release_event, recipient = this, parent = this.control_panel )      // Trigger any scene behavior by assigning a key
-    { const button = parent.appendChild( document.createElement( "button" ) );              // shortcut and a labelled HTML button to it.
-      button.default_color = button.style.backgroundColor = color;
-      const  press = () => { Object.assign( button.style, { 'background-color' : 'red', 
-                                                            'z-index': "1", 'transform': "scale(2)" } );
-                             callback.call( recipient );
-                           },
-           release = () => { Object.assign( button.style, { 'background-color' : button.default_color, 
-                                                            'z-index': "0", 'transform': "scale(1)" } );
-                             if( !release_event ) return;
-                             release_event.call( recipient );
-                           };
-      const key_name = shortcut_combination.join( '+' ).split( " " ).join( "Space" );
-      button.textContent = "(" + key_name + ") " + description;
-      button.addEventListener( "mousedown" , press );
-      button.addEventListener( "mouseup",  release );
-      button.addEventListener( "touchstart", press, { passive: true } );
-      button.addEventListener( "touchend", release, { passive: true } );
-      if( !shortcut_combination ) return;
-      this.key_controls.add( shortcut_combination, press, release );
+    { 
+//       const button = parent.appendChild( document.createElement( "button" ) );              // shortcut and a labelled HTML button to it.
+//       button.default_color = button.style.backgroundColor = color;
+//       const  press = () => { Object.assign( button.style, { 'background-color' : 'red', 
+//                                                             'z-index': "1", 'transform': "scale(2)" } );
+//                              callback.call( recipient );
+//                            },
+//            release = () => { Object.assign( button.style, { 'background-color' : button.default_color, 
+//                                                             'z-index': "0", 'transform': "scale(1)" } );
+//                              if( !release_event ) return;
+//                              release_event.call( recipient );
+//                            };
+//       const key_name = shortcut_combination.join( '+' ).split( " " ).join( "Space" );
+//       button.textContent = "(" + key_name + ") " + description;
+//       button.addEventListener( "mousedown" , press );
+//       button.addEventListener( "mouseup",  release );
+//       button.addEventListener( "touchstart", press, { passive: true } );
+//       button.addEventListener( "touchend", release, { passive: true } );
+//       if( !shortcut_combination ) return;
+//       this.key_controls.add( shortcut_combination, press, release );
     }
   submit_shapes( webgl_manager, shapes )            // Call this to start using a set of shapes.  It ensures that this scene as well as the
                                                     // Webgl_Manager has pointers to the shapes when needed.  It also loads each shape onto
