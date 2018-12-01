@@ -7,12 +7,17 @@ class Project extends Scene_Component
 
         context.globals.graphics_state.camera_transform = Mat4.look_at( Vec.of( 0,0,10 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) );
 
+        context.globals.graphics_state.camera_transform = context.globals.graphics_state.camera_transform.times(Mat4.translation([0, 0, 8.5]));
+
+
+
         const r = context.width/context.height;
         context.globals.graphics_state.projection_transform = Mat4.perspective( Math.PI/4, r, .1, 1000 );
 
         const shapes = { box:   new Cube(),
                          axis:  new Axis_Arrows(),
-                         sphere: new Subdivision_Sphere(4)
+                         sphere: new Subdivision_Sphere(4),
+                         rocket: new Shape_From_File( "/assets/rocket.obj" )
                        }
 
         this.submit_shapes( context, shapes );
@@ -20,7 +25,11 @@ class Project extends Scene_Component
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
-            universe: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/rsz_universe.jpg", true)})
+            universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/rsz_universe.jpg", true)}),
+            bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( .5,.5,.5,1 ),        // Bump mapped:
+                { ambient: .3, diffusivity: .5, specularity: .5, texture: context.get_instance( "/assets/rocket_texture.jpg" ) } ),
+            non_bump: context.get_instance( Phong_Shader )  .material( Color.of( .5,.5,.5,1 ),       // Non bump mapped:
+                { ambient: .3, diffusivity: .5, specularity: .5, texture: context.get_instance( "/assets/rocket_texture.jpg" ) } )
           }
 
         this.lights = [ new Light( Vec.of( -5,5,5,1 ), Color.of( 0,1,1,1 ), 100000 ) ];
@@ -35,13 +44,18 @@ class Project extends Scene_Component
         this.bullet_radius = 0.08;
 
         // Set dimensions for Universe Box
-        this.universe_width = 10;
+        this.universe_width = 50;
+
+        // Set dimensions for Rocket Box
+        this.rocket_girth = 0.1;
 
 
 //         this.bullet_transforms = [Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))];
         this.bullet_transforms = [];
         this.planet_transforms = [];
         this.earth_transform = Mat4.identity().times(Mat4.scale([this.earth_radius, this.earth_radius, this.earth_radius]));
+
+        
 
         this.universe_transform = Mat4.identity().times( Mat4.scale([this.universe_width, this.universe_width, this.universe_width]) );
       }
@@ -99,6 +113,14 @@ class Project extends Scene_Component
         //console.log("PLANETS => ");
         //console.log(this.planet_transforms);
 
+        if (t <= 10) {
+            graphics_state.camera_transform = graphics_state.camera_transform.times(Mat4.translation([0, 0, -0.01]));
+        }
+
+//         while (t <= 50) {
+//             graphics_state.camera_transform.times(Mat4.translation([0, 0, 0.2]));
+//         }
+
         
         // Spawn planets
         if (!this.game_over) {
@@ -107,8 +129,15 @@ class Project extends Scene_Component
         }
 
         // Draw the universe box
-        
         this.shapes.box.draw(graphics_state, this.universe_transform, this.materials.universe);
+
+        // Draw rocket
+        this.rocket_transform = Mat4.identity().times(Mat4.rotation(5/4*Math.PI, Vec.of(0,1,0)))
+                                               .times(Mat4.rotation(t/2., Vec.of(0,1,0)))
+                                               .times(Mat4.translation([this.earth_radius + this.rocket_girth + t/10., 0,0]))
+                                               .times(Mat4.scale([this.rocket_girth, this.rocket_girth, this.rocket_girth]));
+                                                     
+        this.shapes.rocket.draw(graphics_state, this.rocket_transform, this.materials.bump_map);
 
         // Draw Earth
         this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,1,0)));
@@ -195,7 +224,7 @@ class Texture_Scroll_X extends Phong_Shader
             return;
           }                                 // If we get this far, calculate Smooth "Phong" Shading as opposed to Gouraud Shading.
                                             // Phong shading is not to be confused with the Phong Reflection Model.
-          vec4 tex_color = texture2D( texture, f_tex_coord + vec2(mod(animation_time,4.)*2.,0.) );                         // Sample the texture image in the correct place.
+          vec4 tex_color = texture2D( texture, f_tex_coord + vec2(mod(animation_time,100.)*0.01,0.) );                         // Sample the texture image in the correct place.
                                                                                       // Compute an initial (ambient) color:
           if( USE_TEXTURE ) gl_FragColor = vec4( ( tex_color.xyz + shapeColor.xyz ) * ambient, shapeColor.w * tex_color.w ); 
           else gl_FragColor = vec4( shapeColor.xyz * ambient, shapeColor.w );
