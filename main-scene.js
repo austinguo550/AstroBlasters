@@ -19,7 +19,8 @@ class Project extends Scene_Component
 
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
-            earth: context.get_instance(Texture_Sphere).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)})
+            earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
+            universe: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/rsz_universe.jpg", true)})
           }
 
         this.lights = [ new Light( Vec.of( -5,5,5,1 ), Color.of( 0,1,1,1 ), 100000 ) ];
@@ -28,14 +29,21 @@ class Project extends Scene_Component
         this.last_spawn_time = -10.0;
         this.score_label = document.getElementById("score");
 
+        // Set dimensions for Earth
         this.earth_radius = 1;
         this.planet_radius = 0.2;
         this.bullet_radius = 0.08;
 
+        // Set dimensions for Universe Box
+        this.universe_width = 10;
+
+
 //         this.bullet_transforms = [Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))];
         this.bullet_transforms = [];
         this.planet_transforms = [];
-        this.earth_transform = Mat4.identity().times(Mat4.scale([this.earth_radius, this.earth_radius, this.earth_radius]))
+        this.earth_transform = Mat4.identity().times(Mat4.scale([this.earth_radius, this.earth_radius, this.earth_radius]));
+
+        this.universe_transform = Mat4.identity().times( Mat4.scale([this.universe_width, this.universe_width, this.universe_width]) );
       }
 
     // rot controls how fast planet orbits around Earth
@@ -90,12 +98,17 @@ class Project extends Scene_Component
 
         //console.log("PLANETS => ");
         //console.log(this.planet_transforms);
+
         
         // Spawn planets
         if (!this.game_over) {
             this.score_label.innerHTML = t.toFixed(2);
             this.spawn_planets(t);
         }
+
+        // Draw the universe box
+        
+        this.shapes.box.draw(graphics_state, this.universe_transform, this.materials.universe);
 
         // Draw Earth
         this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,1,0)));
