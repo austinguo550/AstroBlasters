@@ -6,10 +6,7 @@ class Project extends Scene_Component
           context.register_scene_component( new Movement_Controls( context, control_box.parentElement.insertCell() ) ); 
 
         context.globals.graphics_state.camera_transform = Mat4.look_at( Vec.of( 0,0,10 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) );
-
         context.globals.graphics_state.camera_transform = context.globals.graphics_state.camera_transform.times(Mat4.translation([0, 0, 8.5]));
-
-
 
         const r = context.width/context.height;
         context.globals.graphics_state.projection_transform = Mat4.perspective( Math.PI/4, r, .1, 1000 );
@@ -22,6 +19,8 @@ class Project extends Scene_Component
 
         this.submit_shapes( context, shapes );
 
+        // Earth is the texture for the planet, Universe is the background texture, Bump_map is the bumped version of the rocket, and 
+        // Non_bump is the version of the rocket without it.
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
