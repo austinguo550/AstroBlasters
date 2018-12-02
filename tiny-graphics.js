@@ -1,6 +1,5 @@
 // tiny-graphics.js - A file that shows how to organize a complete graphics program.
 // It wraps common WebGL commands, math, and web page interactions.  (by Garett)
-
 window.Vec = window.tiny_graphics.Vec =
 class Vec extends Float32Array        // Vectors of floating point numbers.  This puts vector math into JavaScript.
                                       // See these examples for usage of each function:
