@@ -141,7 +141,6 @@ class Subdivision_Sphere extends Shape  // This Shape defines a Sphere surface, 
       
       for( let p of this.positions )
         { 
-          console.log(p);
           this.normals.push( p.copy() );                 // Each point has a normal vector that simply goes to the point from the origin.
 
                                                          // Textures are tricky.  A Subdivision sphere has no straight seams to which image 

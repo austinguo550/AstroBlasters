@@ -276,6 +276,7 @@ class Vertex_Buffer           // To use Vertex_Buffer, make a subclass of it tha
 }
 
 
+
 window.Shape = window.tiny_graphics.Shape =
 class Shape extends Vertex_Buffer
 {           // This class is used the same way as Vertex_Buffer, by subclassing it and writing a constructor that fills in certain fields.

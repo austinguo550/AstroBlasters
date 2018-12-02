@@ -24,7 +24,7 @@ class Project extends Scene_Component
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
-            universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/rsz_universe.jpg", true)}),
+            universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/stars.png", true)}),
             bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( .5,.5,.5,1 ),        // Bump mapped:
                 { ambient: .3, diffusivity: .5, specularity: .5, texture: context.get_instance( "/assets/rocket_texture.jpg" ) } ),
             non_bump: context.get_instance( Phong_Shader )  .material( Color.of( .5,.5,.5,1 ),       // Non bump mapped:
@@ -56,23 +56,13 @@ class Project extends Scene_Component
 
 
         var mainCanvas = document.getElementById('main-canvas');
-        mainCanvas.addEventListener("mousemove", this.track);
+        mainCanvas.addEventListener("mousemove", this.track.bind(this));
+        mainCanvas.addEventListener("mousedown", this.shootCoords.bind(this));
         this.mouseX = 0;
         this.mouseY = 0;
 
         this.universe_transform = Mat4.identity().times( Mat4.scale([this.universe_width, this.universe_width, this.universe_width]) );
       }
-
-
-    track(event){
-        var rect = document.getElementById("main-canvas").getBoundingClientRect();
-        this.mouseX = event.clientX - 548; // need to divide by 100 to get webGL coordinates
-        this.mouseY = (event.clientY - 308) * -1; // need to divide by 100 to get webGL coordinates
-        console.log("mouse moved")
-        console.log(this.mouseX);
-        console.log(this.mouseY);
-    }
-
 
     // rot controls how fast planet orbits around Earth
     // lin controls how fast planet descends towards Earth
@@ -98,6 +88,14 @@ class Project extends Scene_Component
         this.planet_transforms.push(planet);
     }
 
+    add_bullet(targetX, targetY) {
+        let rot_angle = -1*(Math.atan2(targetX, targetY) - Math.PI/2.);
+        let transform = Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))
+                                       .times(Mat4.rotation(rot_angle, Vec.of(0,0,1)));
+        console.log("Adding bullet at angle " + rot_angle);
+        this.bullet_transforms.push(transform);
+    }
+
     spawn_planets(t) {
         if (t - this.last_spawn_time > 5.0) {
             console.log("SPAWN");
@@ -117,6 +115,23 @@ class Project extends Scene_Component
           elem.className = elem.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');   
     }
 
+    shootCoords(event) {
+        let targetX = (this.mouseX)/60;
+        let targetY = (this.mouseY)/60;
+        console.log("Shooting to " + targetX + ", " + targetY);
+        this.add_bullet(targetX, targetY);
+    }
+
+    track(event){
+        let rect = document.getElementById("main-canvas").getBoundingClientRect();
+        this.mouseX = event.clientX - 548; // need to divide by 60 to get webGL coordinates
+        this.mouseY = (event.clientY - 308) * -1; // need to divide by 60 to get webGL coordinates
+//         console.log("mouse moved")
+//         console.log(this.mouseX);
+//         console.log(this.mouseY);
+
+    }
+
     display( graphics_state )
       { graphics_state.lights = this.lights;        // Use the lights stored in this.lights.
         const t = graphics_state.animation_time / 1000, dt = graphics_state.animation_delta_time / 1000;
@@ -128,7 +143,7 @@ class Project extends Scene_Component
         //console.log(this.planet_transforms);
 
         if (t <= 10) {
-            graphics_state.camera_transform = graphics_state.camera_transform.times(Mat4.translation([0, 0, -0.01]));
+            graphics_state.camera_transform = graphics_state.camera_transform.times(Mat4.translation([0, 0, -0.02]));
         }
 
 //         while (t <= 50) {
@@ -157,12 +172,35 @@ class Project extends Scene_Component
         this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,1,0)));
         this.shapes.sphere.draw(graphics_state, this.earth_transform, this.materials.earth);
 
-        // Detect collisions and draw planets, bullets
-        let bullets_to_remove = [];
-        let planets_to_remove = [];
-
+        // Draw all planets and bullets
         for (let p = 0; p < this.planet_transforms.length; p++) {
             let planet = this.planet_transforms[p];
+            this.shapes.sphere.draw(graphics_state, planet.transform, this.materials.phong);
+            // Update planet
+            let next_ptransform = Mat4.identity();
+            next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.dir*planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
+                                             .times(Mat4.translation([0, planet.init_height-planet.lin*(t-planet.init_time), 0]))
+                                             .times(Mat4.scale([planet.scale, planet.scale, planet.scale]));
+            this.planet_transforms[p].transform = next_ptransform;
+        }
+        for (let b = 0; b < this.bullet_transforms.length; b++) {
+            let bullet = this.bullet_transforms[b];
+            this.shapes.sphere.draw(graphics_state, bullet, this.materials.phong);
+            // Update bullet
+            this.bullet_transforms[b] = bullet.times(Mat4.translation([0.8,0,0]));
+        }
+
+        // Detect collisions and remove accordingly
+        let bullets_to_remove = [];
+        let planets_to_remove = [];
+        let p_transforms = this.planet_transforms.slice();
+        let b_transforms = this.bullet_transforms.slice();
+
+        for (let p = 0; p < p_transforms.length; p++) {
+            let planet = p_transforms[p];
+            if (planet == undefined) {
+                continue;
+            }
 
             // Check for collision to Earth
             let planet_coords = Vec.of(planet.transform[0][3], planet.transform[1][3], planet.transform[2][3]);
@@ -173,7 +211,7 @@ class Project extends Scene_Component
                 // Collision to earth has occured
                 console.log("GAME OVER");
                 this.game_over = true;
-                delete this.planet_transforms[p];
+                delete p_transforms[p];
 
                 // Show overlay game over text
                 this.remove_class('game-over', 'hidden');
@@ -183,8 +221,11 @@ class Project extends Scene_Component
 
             // Check for collision to bullets
             let collision = false;
-            for (let b = 0; b < this.bullet_transforms.length; b++) {
-                let bullet = this.bullet_transforms[b];
+            for (let b = 0; b < b_transforms.length; b++) {
+                let bullet = b_transforms[b];
+                if (bullet == undefined) {
+                    continue;
+                }
 
                 let bullet_coords = Vec.of(bullet[0][3], bullet[1][3], bullet[2][3]);
                 let dist = Math.sqrt((bullet_coords[0]-planet_coords[0])**2 + (bullet_coords[1]-planet_coords[1])**2 + (bullet_coords[2]-planet_coords[2])**2);
@@ -194,31 +235,19 @@ class Project extends Scene_Component
                     // Collision occured
                     collision = true;
                     // Delete bullet
-                    delete this.bullet_transforms[b];
+                    delete b_transforms[b];
                     break;
-                } else {
-                    this.shapes.sphere.draw(graphics_state, bullet, this.materials.phong);
-                    // Update bullet
-                    this.bullet_transforms[b] = bullet.times(Mat4.translation([0,0.2,0]));
                 }
             } 
-            if (!collision) {
-                this.shapes.sphere.draw(graphics_state, planet.transform, this.materials.phong);
-                // Update planet
-                let next_ptransform = Mat4.identity();
-                next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.dir*planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
-                                                 .times(Mat4.translation([0, planet.init_height-planet.lin*(t-planet.init_time), 0]))
-                                                 .times(Mat4.scale([planet.scale, planet.scale, planet.scale]));
-                this.planet_transforms[p].transform = next_ptransform;
-            } else {
+            if (collision) {
                 // Collision occured
-                delete this.planet_transforms[p];
+                delete p_transforms[p];
             }
         }
 
         // Filter out empty bullets and planets
-        this.planet_transforms = this.planet_transforms.filter((v) => typeof v !== 'undefined');
-        this.bullet_transforms = this.bullet_transforms.filter((v) => typeof v !== 'undefined');
+        this.planet_transforms = p_transforms.filter((v) => typeof v !== 'undefined');
+        this.bullet_transforms = b_transforms.filter((v) => typeof v !== 'undefined');
       }
   }
 
