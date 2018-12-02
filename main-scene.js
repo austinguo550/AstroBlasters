@@ -89,7 +89,7 @@ class Project extends Scene_Component
     }
 
     add_bullet(targetX, targetY) {
-        let rot_angle = -1*(Math.atan2(targetX, targetY) - Math.PI/2.);
+        let rot_angle = (Math.atan2(targetX, targetY) - Math.PI/2.);
         let transform = Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))
                                        .times(Mat4.rotation(rot_angle, Vec.of(0,0,1)));
         console.log("Adding bullet at angle " + rot_angle);
@@ -102,7 +102,7 @@ class Project extends Scene_Component
             this.last_spawn_time = t;
             let num_spawn = Math.round((t/8)**2)+4;
             for (let i = 0; i < num_spawn; i++) {
-                this.add_planet(Math.random(), Math.random(), 10, Math.random()*Math.PI*2, 0.2, t, Math.random() < 0.5 ? -1 : 1);
+                this.add_planet(Math.random(), Math.random(), 15, Math.random()*Math.PI*2, (Math.random()*0.3)+0.15, t, Math.random() < 0.5 ? -1 : 1);
             }
         }
     }
@@ -116,20 +116,23 @@ class Project extends Scene_Component
     }
 
     shootCoords(event) {
-        let targetX = (this.mouseX)/60;
-        let targetY = (this.mouseY)/60;
+        let targetX = (this.mouseX);
+        let targetY = (this.mouseY);
         console.log("Shooting to " + targetX + ", " + targetY);
         this.add_bullet(targetX, targetY);
     }
 
     track(event){
         let rect = document.getElementById("main-canvas").getBoundingClientRect();
-        this.mouseX = event.clientX - 548; // need to divide by 60 to get webGL coordinates
-        this.mouseY = (event.clientY - 308) * -1; // need to divide by 60 to get webGL coordinates
+        [this.mouseX, this.mouseY] = this.pixelToGl(event.clientX, event.clientY); // need to divide by 60 to get webGL coordinates
 //         console.log("mouse moved")
 //         console.log(this.mouseX);
 //         console.log(this.mouseY);
 
+    }
+
+    pixelToGl(x, y) {
+        return [(x-548)/60, (y-308)/60];
     }
 
     display( graphics_state )
@@ -187,15 +190,28 @@ class Project extends Scene_Component
             let bullet = this.bullet_transforms[b];
             this.shapes.sphere.draw(graphics_state, bullet, this.materials.phong);
             // Update bullet
-            this.bullet_transforms[b] = bullet.times(Mat4.translation([0.8,0,0]));
+            this.bullet_transforms[b] = bullet.times(Mat4.translation([1.1,0,0]));
         }
 
-        // Detect collisions and remove accordingly
         let bullets_to_remove = [];
         let planets_to_remove = [];
         let p_transforms = this.planet_transforms.slice();
         let b_transforms = this.bullet_transforms.slice();
 
+        // Delete bullets that are off screen
+        for (let b = 0; b < b_transforms.length; b++) {
+            let bullet = b_transforms[b];
+
+            let bullet_coords = Vec.of(bullet[0][3], bullet[1][3], bullet[2][3]);
+            let dist_to_center = Math.sqrt((bullet_coords[0])**2 + (bullet_coords[1])**2 + (bullet_coords[2])**2);
+
+            if (dist_to_center > 15.) {
+                // Delete bullet
+                delete b_transforms[b];
+            }
+        } 
+
+        // Detect collisions and remove accordingly
         for (let p = 0; p < p_transforms.length; p++) {
             let planet = p_transforms[p];
             if (planet == undefined) {
