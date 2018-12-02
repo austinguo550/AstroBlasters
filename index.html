@@ -1,12 +1,35 @@
 <!-- Graphics Example Code.  index.html - The web page document containing the canvas (drawing surface), that launches your javascript files. //-->
 <!DOCTYPE html> <html> <head> <meta charset="UTF-8"/> <link rel="icon" href="assets/fav.ico">
+<script src=   "audio.js" ></script> 
+<script>
+  window.onload = init;
+var context;
+var bufferLoader;
+
+function init() {
+  window.AudioContext = window.AudioContext || window.webkitAudioContext;
+  context = new AudioContext();
+  bufferLoader = new BufferLoader(context, ['/assets/Africa.mp3'], finishedLoading);
+  bufferLoader.load();
+}
+
+function finishedLoading(bufferList) {
+  // Create two sources and play them both together.
+  var source1 = context.createBufferSource();
+  source1.buffer = bufferList[0];
+  source1.connect(context.destination);
+  source1.start(0);
+}
+</script>
 <script> window.tiny_graphics = {};             // Store all our JavaScipt code inside of classes here.
          window.classes = {}                    
          </script>          
                                       <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading: //-->
 <script>
   let GAME_OVER = false;
-</script>                                      
+</script>
+
+                                    
 <script src="tiny-graphics.js" ></script>
 <script src= "dependencies.js" ></script>
 <script src=   "main-scene.js" ></script>
@@ -15,7 +38,6 @@
 
 
 <body style="background: DarkGray">       <!-- Begin typing your web page here. //-->
-
                               <!-- The following code embeds a WebGL canvas panel widget with certain scenes and their controls. //-->
 <div id="main-canvas" class="canvas-widget">
   <div id="game-over" class="overlay hidden">GAME OVER</div>

@@ -10,7 +10,6 @@ class Project extends Scene_Component
 
         const r = context.width/context.height;
         context.globals.graphics_state.projection_transform = Mat4.perspective( Math.PI/4, r, .1, 1000 );
-
         const shapes = { box:   new Cube(),
                          axis:  new Axis_Arrows(),
                          sphere: new Subdivision_Sphere(4),
@@ -64,6 +63,15 @@ class Project extends Scene_Component
         this.universe_transform = Mat4.identity().times( Mat4.scale([this.universe_width, this.universe_width, this.universe_width]) );
       }
 
+    track(event){
+        var rect = document.getElementById("main-canvas").getBoundingClientRect();
+        this.mouseX = event.clientX - 548; // need to divide by 100 to get webGL coordinates
+        this.mouseY = (event.clientY - 308) * -1; // need to divide by 100 to get webGL coordinates
+        /*console.log("mouse moved")
+        console.log(this.mouseX);
+        console.log(this.mouseY);*/
+    }
+
     // rot controls how fast planet orbits around Earth
     // lin controls how fast planet descends towards Earth
     // init_height is initial height of planet above Earth
@@ -98,7 +106,7 @@ class Project extends Scene_Component
 
     spawn_planets(t) {
         if (t - this.last_spawn_time > 5.0) {
-            console.log("SPAWN");
+            //console.log("SPAWN");
             this.last_spawn_time = t;
             let num_spawn = Math.round((t/8)**2)+4;
             for (let i = 0; i < num_spawn; i++) {
