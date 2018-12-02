@@ -1,5 +1,5 @@
+// Based on https://www.html5rocks.com/en/tutorials/webaudio/intro/
 function BufferLoader(context, urlList, callback) {
-  console.log("yeehaw");
   this.context = context;
   this.urlList = urlList;
   this.onload = callback;

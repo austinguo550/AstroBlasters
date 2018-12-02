@@ -7,17 +7,14 @@ var context;
 var bufferLoader;
 
 function init() {
-  console.log("First");
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   context = new AudioContext();
-  console.log("Started Loading");
   bufferLoader = new BufferLoader(context, ['/assets/Africa.mp3'], finishedLoading);
   bufferLoader.load();
 }
 
 function finishedLoading(bufferList) {
   // Create two sources and play them both together.
-  console.log("Finished Loading");
   var source1 = context.createBufferSource();
   source1.buffer = bufferList[0];
   source1.connect(context.destination);
