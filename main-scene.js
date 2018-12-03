@@ -117,7 +117,7 @@ class Project extends Scene_Component
         if (t - this.last_spawn_time > 5.0) {
             //console.log("SPAWN");
             this.last_spawn_time = t;
-            let num_spawn = Math.round((t/8)**2)+4;
+            let num_spawn = Math.round((t/8)**1.5)+4;
             for (let i = 0; i < num_spawn; i++) {
                 this.add_planet(Math.random(), Math.random(), 15, Math.random()*Math.PI*2, (Math.random()*0.3)+0.15, t, Math.random() < 0.5 ? -1 : 1);
             }
@@ -228,7 +228,8 @@ class Project extends Scene_Component
             let next_ptransform = Mat4.identity();
             next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.dir*planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
                                              .times(Mat4.translation([0, planet.init_height-planet.lin*(t-planet.init_time), 0]))
-                                             .times(Mat4.scale([planet.scale, planet.scale, planet.scale]));
+                                             .times(Mat4.scale([planet.scale, planet.scale, planet.scale]))
+                                             .times(Mat4.rotation(t-planet.init_time, Vec.of(1,1,1)));
             this.planet_transforms[p].transform = next_ptransform;
         }
         for (let b = 0; b < this.bullet_transforms.length; b++) {
