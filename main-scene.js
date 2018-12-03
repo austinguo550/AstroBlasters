@@ -26,7 +26,7 @@ class Project extends Scene_Component
             white: context.get_instance(Phong_Shader).material(Color.of(1,1,1,1)),
             asteroid: context.get_instance(Fake_Bump_Map).material(Color.of(0,0,0,1), {ambient: 0.75, specularity: 0, texture: context.get_instance("assets/asteroid.jpg", true)}),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
-            turret: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, specularity: 1, texture: context.get_instance("assets/turret.jpg", true)}),
+            turret: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, specularity: 0.2, texture: context.get_instance("assets/turret.jpg", true)}),
             universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/stars.png", true)}),
             bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( 1,1,1,1 ),        // Bump mapped:
                 { ambient: .3, diffusivity: .5, specularity: .5, texture: context.get_instance( "/assets/rocket_texture.jpg" ) } ),
