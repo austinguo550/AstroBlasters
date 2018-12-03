@@ -1,5 +1,5 @@
 <!-- Graphics Example Code.  index.html - The web page document containing the canvas (drawing surface), that launches your javascript files. //-->
-<!DOCTYPE html> <html> <head> <meta charset="UTF-8"/> <link rel="icon" href="assets/fav.ico">
+<!DOCTYPE html> <html> <head> <meta charset="UTF-8"/> <link rel="icon" href="assets/fav.ico"> <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
 <script src=   "audio.js" ></script> 
 <script>
   window.onload = init;
@@ -37,6 +37,12 @@ function start_game() {
     el.classList.add(className);
   else
     el.className += ' ' + className;
+  el = document.getElementById("title");
+  className = "hidden";
+  if (el.classList)
+    el.classList.add(className);
+  else
+    el.className += ' ' + className;
   source1.start(0);
 }
 </script>
@@ -59,13 +65,14 @@ function start_game() {
 <body style="background: DarkGray">       <!-- Begin typing your web page here. //-->
                               <!-- The following code embeds a WebGL canvas panel widget with certain scenes and their controls. //-->
 <div id="main-canvas" class="canvas-widget">
-  <div id="game-over" class="overlay hidden">GAME OVER</div>
+  <div id="game-over" class="overlay hidden blinkingRed">GAME OVER</div>
   <div class="overlay"> 
     <label id="score">00</label>
   </div>
-  <div onclick="start_game()" class="overlay hidden" id="start">
+  <div onclick="start_game()" class="overlay hidden blinking" id="start">
     > CLICK TO DEFEND EARTH <
   </div>
+  <div id="title" class="overlay">ASTRO BLASTERS</div>
 </div>
 <script> "use strict"     // ********************* THE ENTRY POINT OF YOUR WHOLE PROGRAM STARTS HERE ********************* 
                                            // Use this code to embed a widget into any web page.  The widget inclues a 3D WebGL area
