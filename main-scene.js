@@ -101,6 +101,7 @@ class Project extends Scene_Component
         this.planet_transforms.push(planet);
     }
 
+    // Adds bullet to the shot
     add_bullet(targetX, targetY) {
         let rot_angle = (Math.atan2(targetX, targetY) - Math.PI/2.);
         let transform = Mat4.identity().times(Mat4.rotation(rot_angle, Vec.of(0,0,1)))
@@ -110,6 +111,7 @@ class Project extends Scene_Component
         this.bullet_transforms.push(transform);
     }
 
+    // Creates planets
     spawn_planets(t) {
         if (t - this.last_spawn_time > 5.0) {
             //console.log("SPAWN");
@@ -129,6 +131,7 @@ class Project extends Scene_Component
           elem.className = elem.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');   
     }
 
+    // Determines where to shoot
     shootCoords(event) {
         if (!this.playing) {
             return;
