@@ -24,6 +24,7 @@ class Project extends Scene_Component
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
             white: context.get_instance(Phong_Shader).material(Color.of(1,1,1,1)),
+            asteroid: context.get_instance(Fake_Bump_Map).material(Color.of(0,0,0,1), {ambient: 1, specularity: 0, texture: context.get_instance("assets/asteroid.jpg", true)}),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
             universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/stars.png", true)}),
             bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( 1,1,1,1 ),        // Bump mapped:
@@ -222,7 +223,7 @@ class Project extends Scene_Component
         // Draw all planets and bullets
         for (let p = 0; p < this.planet_transforms.length; p++) {
             let planet = this.planet_transforms[p];
-            this.shapes.sphere.draw(graphics_state, planet.transform, this.materials.phong);
+            this.shapes.sphere.draw(graphics_state, planet.transform, this.materials.asteroid);
             // Update planet
             let next_ptransform = Mat4.identity();
             next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.dir*planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
