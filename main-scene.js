@@ -277,8 +277,12 @@ class Project extends Scene_Component
             else if (earth_dist < earth_radius_sum) {
                 // Collision to earth has occured
                 console.log("GAME OVER");
+                if(this.game_over == false){
+                    source2.start(0);
+                }
                 this.game_over = true;
                 source1.stop(0);
+
                 delete p_transforms[p];
 
                 // Show overlay game over text
