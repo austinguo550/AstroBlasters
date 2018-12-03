@@ -228,7 +228,8 @@ class Project extends Scene_Component
             let next_ptransform = Mat4.identity();
             next_ptransform = next_ptransform.times(Mat4.rotation(planet.init_rot+planet.dir*planet.rot*(t-planet.init_time), Vec.of(0,0,1)))
                                              .times(Mat4.translation([0, planet.init_height-planet.lin*(t-planet.init_time), 0]))
-                                             .times(Mat4.scale([planet.scale, planet.scale, planet.scale]));
+                                             .times(Mat4.scale([planet.scale, planet.scale, planet.scale]))
+                                             .times(Mat4.rotation(t-planet.init_time, Vec.of(1,1,1)));
             this.planet_transforms[p].transform = next_ptransform;
         }
         for (let b = 0; b < this.bullet_transforms.length; b++) {
