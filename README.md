@@ -7,7 +7,7 @@ Our project is a tribute to the legendary classic "Africa" by Toto. The game beg
 * Sanketh Hegde: added the Earth planet, with texture, and rotating capabilities. Also added the asteroid spawning and **collision detection**. Laid down major groundwork for the rest of the game.
 * Arpit Jasapara: Added the gunner that fires bullets, created bullet generation, and **added the music to honor Toto**. Worked with Sanketh on collision detection, and assembled everyone's parts with relevant code to make the game run smoothly.
 * Austin Guo: Generated the background universe, and then **loaded the Rocket object** into the game, changing its texture and such to fit our needs.
-* Chaitanya Pedada: Added **mouse tracking/selecting and input detection** from the user. Also added the countdown timer, start option, and other relevant game aspects.
+* Chaitanya Pedada: Added **mouse tracking/selecting and input detection** from the user. Also added the countdown timer, start option, and other relevant game aspects. Added Start Game and End Game styling and effects. 
 
 **Details on How to Both Run and Use/Operate Your Project Application:**
 1. Run host.command to start the server on port 8000, and navigate using Google Chrome to localhost:8000.
