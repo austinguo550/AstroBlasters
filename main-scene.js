@@ -6,14 +6,15 @@ class Project extends Scene_Component
           context.register_scene_component( new Movement_Controls( context, control_box.parentElement.insertCell() ) ); 
 
         context.globals.graphics_state.camera_transform = Mat4.look_at( Vec.of( 0,0,10 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) );
-        context.globals.graphics_state.camera_transform = context.globals.graphics_state.camera_transform.times(Mat4.translation([0, 0, 8.5]));
+        context.globals.graphics_state.camera_transform = context.globals.graphics_state.camera_transform.times(Mat4.translation([0, 0, 8]));
 
         const r = context.width/context.height;
         context.globals.graphics_state.projection_transform = Mat4.perspective( Math.PI/4, r, .1, 1000 );
         const shapes = { box:   new Cube(),
                          axis:  new Axis_Arrows(),
                          sphere: new Subdivision_Sphere(4),
-                         rocket: new Shape_From_File( "/assets/rocket.obj" )
+                         rocket: new Shape_From_File( "/assets/rocket.obj" ),
+                         gunner: new Cube()
                        }
 
         this.submit_shapes( context, shapes );
@@ -22,9 +23,10 @@ class Project extends Scene_Component
         // Non_bump is the version of the rocket without it.
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
+            white: context.get_instance(Phong_Shader).material(Color.of(1,1,1,1)),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
             universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/stars.png", true)}),
-            bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( .5,.5,.5,1 ),        // Bump mapped:
+            bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( 1,1,1,1 ),        // Bump mapped:
                 { ambient: .3, diffusivity: .5, specularity: .5, texture: context.get_instance( "/assets/rocket_texture.jpg" ) } ),
             non_bump: context.get_instance( Phong_Shader )  .material( Color.of( .5,.5,.5,1 ),       // Non bump mapped:
                 { ambient: .3, diffusivity: .5, specularity: .5, texture: context.get_instance( "/assets/rocket_texture.jpg" ) } )
@@ -32,6 +34,8 @@ class Project extends Scene_Component
 
         this.lights = [ new Light( Vec.of( -5,5,5,1 ), Color.of( 0,1,1,1 ), 100000 ) ];
 
+        this.playing = false;
+        this.start_time = 0.0;
         this.game_over = false;
         this.last_spawn_time = -10.0;
         this.score_label = document.getElementById("score");
@@ -40,6 +44,7 @@ class Project extends Scene_Component
         this.earth_radius = 1;
         this.planet_radius = 0.2;
         this.bullet_radius = 0.08;
+        this.gunner_size = 0.1;
 
         // Set dimensions for Universe Box
         this.universe_width = 50;
@@ -48,10 +53,13 @@ class Project extends Scene_Component
         this.rocket_girth = 0.1;
 
 
-//         this.bullet_transforms = [Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))];
         this.bullet_transforms = [];
         this.planet_transforms = [];
-        this.earth_transform = Mat4.identity().times(Mat4.scale([this.earth_radius, this.earth_radius, this.earth_radius]));
+        this.earth_transform = Mat4.identity().times(Mat4.scale([this.earth_radius, this.earth_radius, this.earth_radius]))
+                                              .times(Mat4.rotation(-0.25, Vec.of(0,1,0)));
+        this.gunner_transform = Mat4.identity().times(Mat4.rotation(0.1, Vec.of(0,0,1)))
+                                               .times(Mat4.translation([this.earth_radius+0.14,0,0]))
+                                               .times(Mat4.scale([this.gunner_size, this.gunner_size/2, this.gunner_size]))
 
 
         var mainCanvas = document.getElementById('main-canvas');
@@ -67,9 +75,6 @@ class Project extends Scene_Component
         var rect = document.getElementById("main-canvas").getBoundingClientRect();
         this.mouseX = event.clientX - 548; // need to divide by 100 to get webGL coordinates
         this.mouseY = (event.clientY - 308) * -1; // need to divide by 100 to get webGL coordinates
-        /*console.log("mouse moved")
-        console.log(this.mouseX);
-        console.log(this.mouseY);*/
     }
 
     // rot controls how fast planet orbits around Earth
@@ -98,8 +103,9 @@ class Project extends Scene_Component
 
     add_bullet(targetX, targetY) {
         let rot_angle = (Math.atan2(targetX, targetY) - Math.PI/2.);
-        let transform = Mat4.identity().times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]))
-                                       .times(Mat4.rotation(rot_angle, Vec.of(0,0,1)));
+        let transform = Mat4.identity().times(Mat4.rotation(rot_angle, Vec.of(0,0,1)))
+                                       .times(Mat4.translation([this.earth_radius+0.1,0,0]))
+                                       .times(Mat4.scale([this.bullet_radius, this.bullet_radius, this.bullet_radius]));
         console.log("Adding bullet at angle " + rot_angle);
         this.bullet_transforms.push(transform);
     }
@@ -124,19 +130,23 @@ class Project extends Scene_Component
     }
 
     shootCoords(event) {
+        if (!this.playing) {
+            return;
+        }
         let targetX = (this.mouseX);
         let targetY = (this.mouseY);
         console.log("Shooting to " + targetX + ", " + targetY);
-        this.add_bullet(targetX, targetY);
+        if (!this.game_over)
+            this.add_bullet(targetX, targetY);
     }
 
     track(event){
         let rect = document.getElementById("main-canvas").getBoundingClientRect();
         [this.mouseX, this.mouseY] = this.pixelToGl(event.clientX, event.clientY); // need to divide by 60 to get webGL coordinates
-//         console.log("mouse moved")
-//         console.log(this.mouseX);
-//         console.log(this.mouseY);
-
+        let rot_angle = (Math.atan2(this.mouseX, this.mouseY) - Math.PI/2.);
+        this.gunner_transform = Mat4.identity().times(Mat4.rotation(rot_angle, Vec.of(0,0,1)))
+                                               .times(Mat4.translation([this.earth_radius+0.14,0,0]))
+                                               .times(Mat4.scale([this.gunner_size, this.gunner_size/2, this.gunner_size]))   
     }
 
     pixelToGl(x, y) {
@@ -145,43 +155,66 @@ class Project extends Scene_Component
 
     display( graphics_state )
       { graphics_state.lights = this.lights;        // Use the lights stored in this.lights.
-        const t = graphics_state.animation_time / 1000, dt = graphics_state.animation_delta_time / 1000;
+        let t = graphics_state.animation_time / 1000, dt = graphics_state.animation_delta_time / 1000;
+        if (this.playing) {
+            t = t - this.start_time;
+        } else if (first_start) {
+            this.playing = true;
+            this.start_time = t;
+            t = 0
+            dt = 0;
+        } else {
+            t = 0;
+            dt = 0;
+        }
+       
+        // Draw Earth
+        this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,1,0)));
+
+        if (this.game_over) {
+            this.earth_transform = this.earth_transform.times(Mat4.scale([0.8, 0.8, 0.8]));
+        }
+
+        this.shapes.sphere.draw(graphics_state, this.earth_transform, this.materials.earth);
+
+        // Draw gunner
+        if (!this.game_over)
+            this.shapes.gunner.draw(graphics_state, this.gunner_transform, this.materials.white);
+
+        // Draw the universe box
+        this.shapes.box.draw(graphics_state, this.universe_transform, this.materials.universe);
+
+        this.rocket_transform = Mat4.identity().times(Mat4.rotation(-0.1, Vec.of(1,0,0)));
+
+        if (t > 3.) {
+            this.rocket_transform = this.rocket_transform.times(Mat4.rotation(3./2., Vec.of(0,1,0)));
+        } 
+        else {
+            this.rocket_transform = this.rocket_transform.times(Mat4.rotation(t/2., Vec.of(0,1,0)));
+        }
         
-        //console.log("BULLETS => ");
-        //console.log(this.bullet_transforms);
+        this.rocket_transform = this.rocket_transform
+                                               .times(Mat4.translation([0,0,this.earth_radius + this.rocket_girth + t/2]))
+                                               .times(Mat4.rotation(-Math.PI/2, Vec.of(0,1,0)))
+                                               .times(Mat4.scale([this.rocket_girth, this.rocket_girth, this.rocket_girth]))
+                                               .times(Mat4.rotation(Math.PI/2, Vec.of(1,0,0)))
+                                               .times(Mat4.rotation(-t/2, Vec.of(1,0,0)));
+                                                     
+        this.shapes.rocket.draw(graphics_state, this.rocket_transform, this.materials.bump_map);
 
-        //console.log("PLANETS => ");
-        //console.log(this.planet_transforms);
-
-        if (t <= 10) {
+        if (this.playing && t <= 10) {
             graphics_state.camera_transform = graphics_state.camera_transform.times(Mat4.translation([0, 0, -0.02]));
         }
 
-//         while (t <= 50) {
-//             graphics_state.camera_transform.times(Mat4.translation([0, 0, 0.2]));
-//         }
+        if (!this.playing) {
+            return;
+        }
 
-        
         // Spawn planets
         if (!this.game_over) {
             this.score_label.innerHTML = t.toFixed(2);
             this.spawn_planets(t);
         }
-
-        // Draw the universe box
-        this.shapes.box.draw(graphics_state, this.universe_transform, this.materials.universe);
-
-        // Draw rocket
-        this.rocket_transform = Mat4.identity().times(Mat4.rotation(5/4*Math.PI, Vec.of(0,1,0)))
-                                               .times(Mat4.rotation(t/2., Vec.of(0,1,0)))
-                                               .times(Mat4.translation([this.earth_radius + this.rocket_girth + t/10., 0,0]))
-                                               .times(Mat4.scale([this.rocket_girth, this.rocket_girth, this.rocket_girth]));
-                                                     
-        this.shapes.rocket.draw(graphics_state, this.rocket_transform, this.materials.bump_map);
-
-        // Draw Earth
-        this.earth_transform = this.earth_transform.times(Mat4.rotation(dt/2., Vec.of(0,1,0)));
-        this.shapes.sphere.draw(graphics_state, this.earth_transform, this.materials.earth);
 
         // Draw all planets and bullets
         for (let p = 0; p < this.planet_transforms.length; p++) {
@@ -226,15 +259,21 @@ class Project extends Scene_Component
                 continue;
             }
 
-            // Check for collision to Earth
+            // Check for collision to Earth or origin
             let planet_coords = Vec.of(planet.transform[0][3], planet.transform[1][3], planet.transform[2][3]);
             let earth_dist = Math.sqrt((planet_coords[0])**2 + (planet_coords[1])**2 + (planet_coords[2])**2);
             let earth_radius_sum = planet.scale + this.earth_radius;
 
-            if (earth_dist < earth_radius_sum) {
+            if (this.game_over) {
+                if (earth_dist < 0.1) {
+                    delete p_transforms[p];
+                }
+            }
+            else if (earth_dist < earth_radius_sum) {
                 // Collision to earth has occured
                 console.log("GAME OVER");
                 this.game_over = true;
+                source1.stop(0);
                 delete p_transforms[p];
 
                 // Show overlay game over text

@@ -11,6 +11,11 @@
   color: white;
   font-size: 40px;
   top:20px;
+   user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
 }
 
 .hidden {
@@ -19,4 +24,9 @@
 
 #game-over {
   top: 65px;
+}
+
+#start {
+  top: 275px;
+  background-color: rgba(0,0,0,0.5) !important;
 }

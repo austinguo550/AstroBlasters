@@ -5,19 +5,38 @@
   window.onload = init;
 var context;
 var bufferLoader;
+var source1;
+var first_start = false;
+var start_time = 0.0;
 
 function init() {
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   context = new AudioContext();
-  bufferLoader = new BufferLoader(context, ['/assets/Africa.mp3'], finishedLoading);
+  bufferLoader = new BufferLoader(context, ['/assets/Africa-full.mp3'], finishedLoading);
   bufferLoader.load();
 }
 
 function finishedLoading(bufferList) {
   // Create two sources and play them both together.
-  var source1 = context.createBufferSource();
+  source1 = context.createBufferSource();
   source1.buffer = bufferList[0];
   source1.connect(context.destination);
+  let el = document.getElementById("start");
+  let className = "hidden";
+  if (el.classList)
+    el.classList.remove(className);
+  else
+    el.className = el.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+}
+
+function start_game() {
+  first_start = true;
+  let el = document.getElementById("start");
+  let className = "hidden";
+  if (el.classList)
+    el.classList.add(className);
+  else
+    el.className += ' ' + className;
   source1.start(0);
 }
 </script>
@@ -43,6 +62,9 @@ function finishedLoading(bufferList) {
   <div id="game-over" class="overlay hidden">GAME OVER</div>
   <div class="overlay"> 
     <label id="score">00</label>
+  </div>
+  <div onclick="start_game()" class="overlay hidden" id="start">
+    > CLICK TO DEFEND EARTH <
   </div>
 </div>
 <script> "use strict"     // ********************* THE ENTRY POINT OF YOUR WHOLE PROGRAM STARTS HERE ********************* 
