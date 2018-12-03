@@ -24,7 +24,7 @@ class Project extends Scene_Component
         this.materials =
           { phong: context.get_instance( Phong_Shader ).material( Color.of( 1,1,0,1 ) ),
             white: context.get_instance(Phong_Shader).material(Color.of(1,1,1,1)),
-            asteroid: context.get_instance(Fake_Bump_Map).material(Color.of(0,0,0,1), {ambient: 1, specularity: 0, texture: context.get_instance("assets/asteroid.jpg", true)}),
+            asteroid: context.get_instance(Fake_Bump_Map).material(Color.of(0,0,0,1), {ambient: 0.75, specularity: 0, texture: context.get_instance("assets/asteroid.jpg", true)}),
             earth: context.get_instance(Phong_Shader).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/earth.jpg", true)}),
             universe: context.get_instance(Texture_Scroll_X).material(Color.of(0,0,0,1), {ambient: 1, texture: context.get_instance("assets/stars.png", true)}),
             bump_map: context.get_instance( Fake_Bump_Map ).material( Color.of( 1,1,1,1 ),        // Bump mapped:
@@ -117,7 +117,7 @@ class Project extends Scene_Component
         if (t - this.last_spawn_time > 5.0) {
             //console.log("SPAWN");
             this.last_spawn_time = t;
-            let num_spawn = Math.round((t/8)**2)+4;
+            let num_spawn = Math.round((t/8)**1.5)+4;
             for (let i = 0; i < num_spawn; i++) {
                 this.add_planet(Math.random(), Math.random(), 15, Math.random()*Math.PI*2, (Math.random()*0.3)+0.15, t, Math.random() < 0.5 ? -1 : 1);
             }
